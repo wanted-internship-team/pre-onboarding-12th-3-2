@@ -8,12 +8,14 @@ import { SickInfo, SickInfoList } from '../types';
 interface Iprops {
   searchList: SickInfoList;
   selectedIndex: number;
+  setSelectedIndex: React.Dispatch<React.SetStateAction<number>>;
   selectListItemByKeyArrow: (e: React.KeyboardEvent<HTMLLIElement>) => void;
   inputValue: string;
 }
 
 export default function SearchResults(props: Iprops) {
-  const { searchList, selectedIndex, selectListItemByKeyArrow, inputValue } = props;
+  const { searchList, selectedIndex, setSelectedIndex, selectListItemByKeyArrow, inputValue } =
+    props;
 
   const liRef = useRef<HTMLLIElement | null>(null);
 
@@ -22,6 +24,10 @@ export default function SearchResults(props: Iprops) {
       liRef.current.focus();
     }
   });
+
+  const resetSelectedIndex = (idx: number) => {
+    setSelectedIndex(idx);
+  };
 
   return (
     <SearchResultContainer>
@@ -37,6 +43,7 @@ export default function SearchResults(props: Iprops) {
                 ref={idx === selectedIndex ? liRef : null}
                 tabIndex={selectedIndex === idx ? 0 : -1}
                 onKeyDown={selectListItemByKeyArrow}
+                onClick={() => resetSelectedIndex(idx)}
               >
                 <StyledSearchIcon width='16px' height='16px' />
                 {el.sickNm.includes(inputValue) ? (

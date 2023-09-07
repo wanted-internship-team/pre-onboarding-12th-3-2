@@ -65,6 +65,7 @@ export default function Search() {
         <SearchResults
           searchList={searchList}
           selectedIndex={selectedIndex}
+          setSelectedIndex={setSelectedIndex}
           selectListItemByKeyArrow={selectListItemByKeyArrow}
           inputValue={inputValue}
         />
