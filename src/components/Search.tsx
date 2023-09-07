@@ -7,11 +7,12 @@ import { getRecommendedWord } from '../apis/instance';
 import { getFromCacheStorage, setToCacheStorage } from '../utils/cache';
 import { debounce } from '../utils/debounce';
 import { setData } from '../utils/setData';
+import { CACHE_RESET_TIME, DEBOUNCE_TIME } from '../constants';
 
 import { SickInfoList } from '../types';
 import { ReactComponent as SearchIcon } from '../assets/icon-search.svg';
 
-const debouncedFetchData = debounce(setData, 1000);
+const debouncedFetchData = debounce(setData, DEBOUNCE_TIME);
 
 export default function Search() {
   const [searchList, setSearchList] = useState<SickInfoList>([]);
@@ -26,7 +27,7 @@ export default function Search() {
     if (!keyword.trim()) return;
     debouncedFetchData<SickInfoList>({
       getCacheCallback: () => getFromCacheStorage(keyword),
-      setCacheCallback: (data) => setToCacheStorage(keyword, data, 1000),
+      setCacheCallback: (data) => setToCacheStorage(keyword, data, CACHE_RESET_TIME),
       getAPICallback: () => getRecommendedWord(keyword),
       dispatchCallback: (data) => setSearchList(data),
     });
