@@ -4,12 +4,17 @@ import { StyledSearchIcon } from './Search';
 
 interface Iprops {
   inputValue: string;
+  setSelectedIndex: React.Dispatch<React.SetStateAction<number>>;
   selectListItemByKeyArrow: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   changeHandler: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function SearchBar(props: Iprops) {
-  const { inputValue, selectListItemByKeyArrow, changeHandler } = props;
+  const { inputValue, setSelectedIndex, selectListItemByKeyArrow, changeHandler } = props;
+
+  const resetSelectedIndex = () => {
+    setSelectedIndex(-1);
+  };
 
   return (
     <SearchBox>
@@ -20,6 +25,7 @@ export default function SearchBar(props: Iprops) {
         value={inputValue}
         onKeyDown={selectListItemByKeyArrow}
         onChange={changeHandler}
+        onClick={resetSelectedIndex}
       />
       <SearchButton aria-label='검색'>
         <StyledSearchIcon width='21px' height='21px' />

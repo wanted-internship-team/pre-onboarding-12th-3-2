@@ -59,6 +59,7 @@ export default function Search() {
     <>
       <SearchBar
         inputValue={inputValue}
+        setSelectedIndex={setSelectedIndex}
         selectListItemByKeyArrow={selectListItemByKeyArrow}
         changeHandler={changeHandler}
       />
