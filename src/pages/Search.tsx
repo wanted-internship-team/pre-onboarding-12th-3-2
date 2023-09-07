@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { getRecommendedWord } from '../apis/instance';
+import { debounce } from '../utils/debounce';
+import { isEmptyArray } from '../utils/isEmptyArray';
+import { setData } from '../utils/setData';
 import { SickInfoList } from '../types';
-import { isEmptyArray } from '../utils/utils';
 
 export default function Search() {
   const [searchList, setSearchList] = useState<SickInfoList>([]);
@@ -10,15 +12,11 @@ export default function Search() {
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     const keyword = e.target.value;
-    const fetchData = async (keyword: string) => {
-      try {
-        const response = await getRecommendedWord(keyword);
-        setSearchList(response);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData(keyword);
+
+    debouncedFetchData<SickInfoList>({
+      getAPICallback: () => getRecommendedWord(keyword),
+      dispatchCallback: (data) => setSearchList(data),
+    });
   };
 
   return (
@@ -42,3 +40,5 @@ export default function Search() {
     </div>
   );
 }
+
+const debouncedFetchData = debounce(setData, 1000);
