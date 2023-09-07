@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
+import { styled } from 'styled-components';
 import { getRecommendedWord } from '../apis/instance';
 import { debounce } from '../utils/debounce';
 import { isEmptyArray } from '../utils/isEmptyArray';
 import { setData } from '../utils/setData';
-import { SickInfoList } from '../types';
 import { getFromCacheStorage, setToCacheStorage } from '../utils/cache';
-import { styled } from 'styled-components';
+import { SickInfoList } from '../types';
 import { ReactComponent as SearchIcon } from '../assets/icon-search.svg';
+import HighlightedText from '../components/HighlightedText';
 
 const debouncedFetchData = debounce(setData, 1000);
 
 export default function Search() {
   const [searchList, setSearchList] = useState<SickInfoList>([]);
   const [inputValue, setInputValue] = useState<string>('');
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
+  const liRef = useRef<HTMLLIElement | null>(null);
 
   const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
+    // 포커스 값 초기화
+    setSelectedIndex(-1);
     const keyword = e.target.value;
     if (!keyword.trim()) return;
     debouncedFetchData<SickInfoList>({
@@ -25,6 +31,33 @@ export default function Search() {
       dispatchCallback: (data) => setSearchList(data),
     });
   };
+
+  const selectListItemByKeyArrow = (e: any) => {
+    // Qusetion: 얜 정체가 뭐죠? -> 두번씩 되는 거 안 되게
+    if (e.nativeEvent.isComposing) return;
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const lastIndex = searchList.length - 1;
+        setSelectedIndex((prev) => (prev < lastIndex ? prev + 1 : 0));
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const lastIndex = searchList.length - 1;
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : lastIndex));
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (liRef.current) {
+      liRef.current.focus();
+    }
+  });
 
   return (
     <Container>
@@ -37,6 +70,7 @@ export default function Search() {
           type='search'
           placeholder='검색어를 입력해 주세요'
           value={inputValue}
+          onKeyDown={selectListItemByKeyArrow}
           onChange={changeHandler}
         />
         <SearchButton aria-label='검색'>
@@ -51,10 +85,19 @@ export default function Search() {
               {isEmptyArray(searchList) ? (
                 <Message>검색어 없음</Message>
               ) : (
-                searchList.map((el) => (
-                  <SearchText key={el.sickCd}>
+                searchList.map((el, idx) => (
+                  <SearchText
+                    key={el.sickCd}
+                    ref={idx === selectedIndex ? liRef : null}
+                    tabIndex={selectedIndex === idx ? 0 : -1}
+                    onKeyDown={selectListItemByKeyArrow}
+                  >
                     <StyledSearchIcon width='16px' height='16px' />
-                    <span>{el.sickNm}</span>
+                    {el.sickNm.includes(inputValue) ? (
+                      <HighlightedText parts={el.sickNm.split(inputValue)} value={inputValue} />
+                    ) : (
+                      <span>{el.sickNm}</span>
+                    )}
                   </SearchText>
                 ))
               )}
@@ -149,7 +192,7 @@ const ResultTitle = styled.h3`
 
 const ResultBox = styled.div`
   max-height: 160px;
-  overflow-y: auto;
+  overflow-y: scroll;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -166,6 +209,7 @@ const ResultBox = styled.div`
 const SearchText = styled.li`
   display: flex;
   align-items: center;
+  padding: 8px 0;
 
   span {
     padding: 5px;
@@ -175,11 +219,10 @@ const SearchText = styled.li`
   &:focus,
   &:focus-visible {
     outline: none;
-
-    span {
-      background-color: var(--lightGray);
-      border-radius: 5px;
-    }
+    color: black;
+    font-weight: 500;
+    background-color: rgba(49, 130, 246, 0.2);
+    border-radius: 5px;
   }
 `;
 
