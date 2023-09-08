@@ -137,7 +137,7 @@ npm start
 > Cache Storage, Local Storage, Session Storage 및 리액트 상태로 저장하는 것까지 다양한 선택지를 두고 논의를 진행했습니다. 유저의 저장 횟수, 서비스의 성능 등을 고려하였습니다. Local Storage, Session Storage의 경우 용량이 적으며 캐싱을 하기에 더 권장되는 Cache Storage가 있기에 후보에서 제외하였습니다. 리액트 상태 저장의 경우 프로젝트 자체가 가지게 되는 메모리 값이 커질 것이 우려되었고, Cache Storage를 이용해 외부 기억 공간을 사용함으로써 메모리상의 이점을 가져가기로 결정했습니다.  
 
 ▶ 캐시를 저장하는 함수 `setToCacheStorage`와 값을 가져오는 `getFromCacheStorage`함수를 구현하고, cache가 있을 경우 해당 데이터를 활용하고, 없는 경우에만 요청 api를 호출합니다.
-```
+```javascript
 // data fetch 과정
   debouncedFetchData<SickInfoList>({
     getCacheCallback: () => getFromCacheStorage(keyword),
@@ -150,7 +150,7 @@ npm start
 **1-1. 캐시 관련 클래스 생성**
 
 ▶ cacheStorage를 클래스로 정의해, 추후 재사용할 수 있는 코드를 작성하고자 했습니다. 프로젝트가 커짐에 따라 라우트를 여러개 사용하게 되면 라우트에 따라 Key 값을 분리하여 캐시 값을 관리할 수 있습니다.
-```
+```javascript
 class CacheStorage {
   private KEY: string;
   private cachePromise: Promise<Cache>;
@@ -175,7 +175,7 @@ class CacheStorage {
 **1-2. 데이터 저장 함수의 기능 확장(캐싱 기능 추가)**
 
 ▶ 필요 데이터를 상태값에 저장하는 `setData`함수에 캐싱 기능을 함께 저장했습니다. 다양한 로컬 캐싱 함수를 적용할 수 있도록 setData의 매개변수에 캐싱함수를 추가했습니다.
-```
+```javascript
 export const setData = async <T>({
   getCacheCallback,
   setCacheCallback,
@@ -201,7 +201,7 @@ export const setData = async <T>({
 > 캐시 용량이 초과될 때 발생하는 예외사항을 방지하고, 서버의 데이터와 로컬의 데이터가 동기화 및 업데이트 되어 데이터의 일관성 을 유지하기 위해 expire time을 설정하기로 했습니다. 저장되는 시점의 시간 값을 함께 저장하고 현재 시간을 기준으로 일정 시간이상 차이가 나면 제거하는 로직을 `직접 구현하는 방법`과 `Cache-Control options`를 사용하는 방법이 있었습니다. <br /> Cache-Control의 경우 "Cache-Control": "max-age=1, stale-while-revalidate=59"의 옵션으로 설정하여, 자동으로 캐시가 만료되어 새로 데이터를 캐시에 저장할 것을 기대했지만 실행되지 않았고, 직접 삭제 로직을 구현해 삭제 로직을 명확히 파악하고자 했습니다. 
 
 ▶expire-time과 현재 시간 값(timestamp)을 갖는 객체를 만들어, cacheStorage 에 저장합니다. 이후, cacheStorage에 저장된 값을 바탕으로 응답된 데이터에서 현재 시간에서 timestamp 값의 차이를 계산하여 expire-time을 초과하는지 확인합니다.
-```
+```javascript
 const currentTime = new Date().getTime();
 const cachedTime = res.timestamp;
 const timeDiff = currentTime - cachedTime;
@@ -220,7 +220,7 @@ const timeDiff = currentTime - cachedTime;
 > Debouncing의 기준을 값과 함수로 하는 것의 성능상 차이가 없어, 스타일과 선호의 차이에 따라 결정을 하기로 했습니다. 비슷한 로직들을 분리할 때 주로 함수 형태로 분리하였기에, debouncing도 함수 형태로 분리했습니다. <br /> 단, 함수로 선언하게 되면 컴포넌트 내에서 상태값(inputValue)이 변할 때마다 함수가 재생성되므로 입력 값의 횟수만큼 컴포넌트가 리렌더링되는 문제가 있었습니다. (⇒ 이경우 useCallback으로 fetchData 함수를 감싸주어도 동일한 현상 발생)
 
 ▶ 따라서, 컴포넌트 외부에서 fetch 함수와 debounce로 만든 fetch 함수를 정의해주었습니다.
-```
+```javascript
 // 👍 디바운싱이 적용되어 1초마다 api 호출과 동시에 컴포넌트 리렌더링
 const fetchData = async (keyword: string, setSearchList: React.Dispatch<React.SetStateAction<SickInfoList>>) => {
 	  try {
@@ -244,7 +244,7 @@ export default function Search() {
     debouncedFetchData(keyword, setSearchList);
   };
 	
-	return (....)
+  return (....)
 }
 ```
 
@@ -256,7 +256,7 @@ export default function Search() {
 ### 🤝 논의 맟 결정 사항
 **1. console 출력 구현**
 ▶  axios interceptor를 사용하여 콘솔창에 api 호출 횟수 출력했습니다.
-```
+```javascript
 export const instance = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -291,7 +291,7 @@ instance.interceptors.request.use((config) => {
 [↑변경 후]
 
 ▶ 키보드 이벤트가 event의 default값이 스크롤 이동이 우선되어, 이벤트 실행에 따라 `e.preventDefault()`를 적용해 문제를 해결했습니다.
-```
+```javascript
   const selectListItemByKeyArrow = (e: any) => {
     if (e.nativeEvent.isComposing) return;
 
@@ -316,7 +316,7 @@ instance.interceptors.request.use((config) => {
 > 문제 사항1. <br /> 추천 검색어를 클릭했을 때 기존의 selectedIndex가 변경되지 않아 다음 포커스시 클릭한 요소의 다음이 아닌, 기존 요소 다음의 요소가 포커스 되는 문제 발생가 발생했습니다.
 
 ▶ selectedIndex를 변경하는 setSelectedIndex() 를 props로 전달받아 추천 검색어 결과를 클릭했을 때 해당 요소의 인덱스로 selectedIndex를 변경해주어 해결했습니다. setSelectedIndex를 onClick 이벤트에 바로 전달할 수도 있지만, 더 선언적인 코드를 지향하고자 resetSelectedIndex를 정의해서 핸들러로 전달했습니다.
-```
+```javascript
 export default function SearchResults(props: Iprops) {
   const { searchList, selectedIndex, setSelectedIndex, selectListItemByKeyArrow, inputValue } =
     props;
