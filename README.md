@@ -91,7 +91,7 @@ Best Practice를 선정하기 위해 작성한 코드를 동료에게 이해하�
 
 ```jsx
 // client
-git clone https://github.com/wanted-internship-team/pre-onboarding-12th-2-2.git
+git clone https://github.com/wanted-internship-team/pre-onboarding-12th-3-2.git
 npm install
 npm start
 
