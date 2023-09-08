@@ -110,7 +110,7 @@ npm start
 - API 호출을 통한 검색어 추천 기능 구현
 - 검색어가 없을 시 “검색어 없음” 표출
 
-### 🤝 논의 맟 결정 사항
+### 🤝 논의 및 결정 사항
 **1. api 호출 방식: axios vs fetch**
 > api request가 하나만 존재하고 있어, axios를 도입할 것인가에 대한 논의를 진행했습니다. <br /> 팀원들의 코드를 바탕으로, axios의 interceptor를 활용하는 것이 fetch를 활용하는 것보다 가시성이 높고 비동기로직을 직관적으로 파악할 수 있음을 확인했습니다.
 
@@ -132,7 +132,7 @@ npm start
 - API 호출별로 로컬 캐싱 구현 
 - expire time 구현 (선택)
   
-### 🤝 논의 맟 결정 사항
+### 🤝 논의 및 결정 사항
 **1. 캐시 저장소**
 > Cache Storage, Local Storage, Session Storage 및 리액트 상태로 저장하는 것까지 다양한 선택지를 두고 논의를 진행했습니다. 유저의 저장 횟수, 서비스의 성능 등을 고려하였습니다. Local Storage, Session Storage의 경우 용량이 적으며 캐싱을 하기에 더 권장되는 Cache Storage가 있기에 후보에서 제외하였습니다. 리액트 상태 저장의 경우 프로젝트 자체가 가지게 되는 메모리 값이 커질 것이 우려되었고, Cache Storage를 이용해 외부 기억 공간을 사용함으로써 메모리상의 이점을 가져가기로 결정했습니다.  
 
@@ -177,8 +177,8 @@ class CacheStorage {
 ▶ 필요 데이터를 상태값에 저장하는 `setData`함수에 캐싱 기능을 함께 저장했습니다. 다양한 로컬 캐싱 함수를 적용할 수 있도록 setData의 매개변수에 캐싱함수를 추가했습니다.
 ```javascript
 export const setData = async <T>({
-  getCacheCallback,
-  setCacheCallback,
+  getCacheCallback, // 캐시 값을 가져오는 callback
+  setCacheCallback, // 캐시 값을 설정하는 callback
   getAPICallback,
   dispatchCallback,
 }: IsetDataProps<T>) => {
@@ -198,7 +198,7 @@ export const setData = async <T>({
 ```
 
 **2. 캐시 만료 시간(expire time) 설정**
-> 캐시 용량이 초과될 때 발생하는 예외사항을 방지하고, 서버의 데이터와 로컬의 데이터가 동기화 및 업데이트 되어 데이터의 일관성 을 유지하기 위해 expire time을 설정하기로 했습니다. 저장되는 시점의 시간 값을 함께 저장하고 현재 시간을 기준으로 일정 시간이상 차이가 나면 제거하는 로직을 `직접 구현하는 방법`과 `Cache-Control options`를 사용하는 방법이 있었습니다. <br /> Cache-Control의 경우 "Cache-Control": "max-age=1, stale-while-revalidate=59"의 옵션으로 설정하여, 자동으로 캐시가 만료되어 새로 데이터를 캐시에 저장할 것을 기대했지만 실행되지 않았고, 직접 삭제 로직을 구현해 삭제 로직을 명확히 파악하고자 했습니다. 
+> 캐시 용량이 초과될 때 발생하는 예외사항을 방지하고, 서버의 데이터와 로컬의 데이터가 동기화 및 업데이트 되어 데이터의 일관성을 유지하기 위해 expire time을 설정하기로 했습니다. 저장되는 시점의 시간 값을 함께 저장하고 현재 시간을 기준으로 일정 시간이상 차이가 나면 제거하는 로직을 `직접 구현하는 방법`과 `Cache-Control options`를 사용하는 방법이 있었습니다. <br /> Cache-Control의 경우 "Cache-Control": "max-age=1, stale-while-revalidate=59"의 옵션으로 설정하여, 자동으로 캐시가 만료되어 새로 데이터를 캐시에 저장할 것을 기대했지만 실행되지 않았고, 직접 삭제 로직을 구현해 삭제 로직을 명확히 파악하고자 했습니다. 
 
 ▶expire-time과 현재 시간 값(timestamp)을 갖는 객체를 만들어, cacheStorage 에 저장합니다. 이후, cacheStorage에 저장된 값을 바탕으로 응답된 데이터에서 현재 시간에서 timestamp 값의 차이를 계산하여 expire-time을 초과하는지 확인합니다.
 ```javascript
@@ -212,7 +212,7 @@ const timeDiff = currentTime - cachedTime;
 ### ✅ Assignment 3
 - 입력마다 API 호출하지 않도록 API 호출 횟수를 줄이는 전략 수립 및 실행
   
-### 🤝 논의 맟 결정 사항
+### 🤝 논의 및 결정 사항
 **1. API 호출 횟수 감소 방식: Debouncing**
 ▶ 기존 로직에서는, ‘담낭’ 키워드를 입력했을 때 ‘ㄷ’, ‘다’, ‘담’, ‘담ㄴ’, ‘담나’, ‘담낭’ 총 6회의 API가 호출됩니다. 관련해 throttling과 debouncing 중 마지막 키워드가 검색 요청 내용이라는 점에서, 더욱 적합한 `debouncing`를 사용하기로 했습니다. debounce의 delay 시간의 경우 한 단어를 바로 작성할 때까지 걸리는 시간보다 약간의 여유 시간을 두어 1초로 설정했습니다.
 
@@ -253,8 +253,10 @@ export default function Search() {
 ### ✅ Assignment 4
 - API를 호출할 때 마다 `console.info("calling api")` 출력을 통해 콘솔창에서 API 호출 횟수 확인이 가능하도록 설정
   
-### 🤝 논의 맟 결정 사항
+### 🤝 논의 및 결정 사항
 **1. console 출력 구현**
+> 'API를 호출할 때마다 출력을 해주어야 한다'를 팀원들과 함께 고민해보았습니다. 패칭 함수를 호출할 때마다 콘솔에 출력을 하는 방식과, <br /> interceptor를 사용하여 출력하는 방식 등 다양한 방식이 존재하였지만, 명확한 코드 호출 시점을 고민하지 않아도 된다는 점에서 interceptor를 사용하여 콘솔창에 메시지를 출력해주었습니다.
+
 ▶  axios interceptor를 사용하여 콘솔창에 api 호출 횟수 출력했습니다.
 ```javascript
 export const instance = axios.create({
@@ -275,10 +277,10 @@ instance.interceptors.request.use((config) => {
 ### ✅ Assignment 5
 - 키보드만으로 추천 검색어들로 이동 가능하도록 구현
   
-### 🤝 논의 맟 결정 사항
+### 🤝 논의 및 결정 사항
 **1. 구현 방식**
 
-▶ `keydown`이벤트로 키보드의 방향키를 눌렀을 때 이동을 구현했습니다. 별도의 `selectedIndex`상태값을 두어 selectedIndex와 검색어 아이템의 인덱스가 같을 경우, 해당 아이템을 강조하는 스타일링을 구현했습니다.
+▶ `keydown`이벤트로 키보드의 방향키를 눌렀을 때 이동을 구현했습니다. 별도의 `selectedIndex`상태값을 두어 selectedIndex와 검색어 아이템의 인덱스가 같을 경우, `ref.current.focus()`로 해당 아이템을 포커싱하여 강조하는 스타일링을 구현했습니다.
 
 > 문제 사항1. <br /> keydown 이벤트를 걸었을 때, 하단으로 인덱스 이동이 되는 것보다 스크롤이 이동되어버리는 문제가 발생했습니다.
 
@@ -305,6 +307,7 @@ instance.interceptors.request.use((config) => {
         break;
       }
       case 'ArrowUp': {
+				e.preventDefault(); // ✨ 추가하여 해결!
         (...)
       }
       default:
@@ -313,7 +316,7 @@ instance.interceptors.request.use((config) => {
   };
 ```
 
-> 문제 사항1. <br /> 추천 검색어를 클릭했을 때 기존의 selectedIndex가 변경되지 않아 다음 포커스시 클릭한 요소의 다음이 아닌, 기존 요소 다음의 요소가 포커스 되는 문제 발생가 발생했습니다.
+> 문제 사항2. <br /> 추천 검색어를 클릭했을 때 기존의 selectedIndex가 변경되지 않아 다음 포커스시 클릭한 요소의 다음이 아닌, 기존 요소 다음의 요소가 포커스 되는 문제가 발생했습니다.
 
 ▶ selectedIndex를 변경하는 setSelectedIndex() 를 props로 전달받아 추천 검색어 결과를 클릭했을 때 해당 요소의 인덱스로 selectedIndex를 변경해주어 해결했습니다. setSelectedIndex를 onClick 이벤트에 바로 전달할 수도 있지만, 더 선언적인 코드를 지향하고자 resetSelectedIndex를 정의해서 핸들러로 전달했습니다.
 ```javascript
